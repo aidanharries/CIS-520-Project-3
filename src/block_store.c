@@ -8,6 +8,16 @@
 // remove it before you submit. Just allows things to compile initially.
 #define UNUSED(x) (void)(x)
 
+/*
+ * @struct block_store
+ * @brief Structure representing a block storage system.
+*/
+typedef struct block_store 
+{
+    bitmap_t* bitmap;   // Bitmap to track used/free blocks
+    uint8_t data[BLOCK_STORE_NUM_BYTES];    // Storage for blocks
+} block_store_t;
+
 block_store_t *block_store_create()
 {
     return NULL;
