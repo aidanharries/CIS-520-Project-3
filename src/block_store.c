@@ -28,7 +28,7 @@ block_store_t *block_store_create()
         if (block != NULL) {
             //Allocate and initilizae num of stored blocks in bitmap 
             block->bitmap = bitmap_create(BLOCK_STORE_NUM_BLOCKS);
-            //Error check that bitmap created succesfully by checking if pointer != Null 
+            //Error check that bitmap created succesfully by checking if pointer == Null, else continue/skip 
             if (block->bitmap == NULL) {
                 free(block); //free mem
                 return NULL; //null on error
