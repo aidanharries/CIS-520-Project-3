@@ -18,9 +18,24 @@ typedef struct block_store
     uint8_t data[BLOCK_STORE_NUM_BYTES];    // Storage for blocks
 } block_store_t;
 
+
+
 block_store_t *block_store_create()
 {
-    return NULL;
+    //Allocate mem for block store struct
+    block_store_t *block = (block_store_t *)malloc(sizeof(block_store_t)); 
+        //Error check. Check that allocation worked
+        if (block != NULL) {
+            //Allocate and initilizae num of stored blocks in bitmap 
+            block->bitmap = bitmap_create(BLOCK_STORE_NUM_BLOCKS);
+            //Error check that bitmap created succesfully by checking if pointer != Null 
+            if (block->bitmap == NULL) {
+                free(block); //free mem
+                return NULL; //null on error
+            }
+            return block;
+        }
+        return NULL; //null on error
 }
 
 void block_store_destroy(block_store_t *const bs)
