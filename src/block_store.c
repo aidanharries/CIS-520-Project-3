@@ -19,29 +19,38 @@ typedef struct block_store
 } block_store_t;
 
 
-
+/*
+ * @struct block_store_create
+ * @brief Creates and initializes a block store structure.
+ * @return A pointer to the newly created block_store structure on sucess, or NULL on failure.
+*/
 block_store_t *block_store_create()
 {
-    //Allocate mem for block store struct
-    block_store_t *block = (block_store_t *)malloc(sizeof(block_store_t)); 
-        //Error check. Check that allocation worked
-        if (block != NULL) {
-            //Allocate and initilizae num of stored blocks in bitmap 
-            block->bitmap = bitmap_create(BLOCK_STORE_NUM_BLOCKS);
-            //Error check that bitmap created succesfully by checking if pointer == Null, else continue/skip 
-            if (block->bitmap == NULL) {
-                free(block); //free mem
-                return NULL; //null on error
-            }
-            return block;
+    //Allocate mem for block store struct and initialize all bits to zero
+    block_store_t *block = (block_store_t *)calloc(1, sizeof(block_store_t));
+
+    //Error check. Check that allocation worked
+    if (block != NULL) {
+        //Allocate and initilizae num of stored blocks in bitmap 
+        block->bitmap = bitmap_create(BLOCK_STORE_NUM_BLOCKS);
+
+        //Error check that bitmap created succesfully by checking if pointer == Null, else continue/skip 
+        if (block->bitmap == NULL) {
+            free(block); //free mem
+            return NULL; //null on error
         }
-        return NULL; //null on error
+
+        return block;
+    }
+
+    return NULL; //null on error
 }
 
 void block_store_destroy(block_store_t *const bs)
 {
     UNUSED(bs);
 }
+
 size_t block_store_allocate(block_store_t *const bs)
 {
     UNUSED(bs);
