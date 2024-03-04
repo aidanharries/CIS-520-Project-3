@@ -48,7 +48,11 @@ block_store_t *block_store_create()
 
 void block_store_destroy(block_store_t *const bs)
 {
-    UNUSED(bs);
+    //Check if block store is not empty
+     if (bs != NULL) {
+        bitmap_destroy(bs->bitmap); //Free the bitmap for the given block
+        free(bs); //free mem
+    }
 }
 
 size_t block_store_allocate(block_store_t *const bs)
