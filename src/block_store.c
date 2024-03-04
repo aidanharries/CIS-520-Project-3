@@ -46,6 +46,11 @@ block_store_t *block_store_create()
     return NULL; //null on error
 }
 
+/*
+ * @struct block_store_destroy
+ * @brief Deletes block store structure.
+ * @param BS device
+*/
 void block_store_destroy(block_store_t *const bs)
 {
     //Check if block store is not empty
