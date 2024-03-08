@@ -20,7 +20,7 @@ typedef struct block_store
 
 
 /*
- * @struct block_store_create
+ * @function block_store_create
  * @brief Creates and initializes a block store structure.
  * @return A pointer to the newly created block_store structure on sucess, or NULL on failure.
 */
@@ -47,9 +47,9 @@ block_store_t *block_store_create()
 }
 
 /*
- * @struct block_store_destroy
+ * @function block_store_destroy
  * @brief Deletes block store structure.
- * @param BS device
+ * @param BS device.
 */
 void block_store_destroy(block_store_t *const bs)
 {
@@ -66,16 +66,35 @@ size_t block_store_allocate(block_store_t *const bs)
     return 0;
 }
 
+/*
+ * @function block_store_request
+ * @brief Attempts to allocate a specific block by its ID.
+ * @param bs A pointer to the block_store structure.
+ * @param block_id The ID of the block to allocate.
+ * @return True if the block was successfully allocated, False otherwise.
+*/
 bool block_store_request(block_store_t *const bs, const size_t block_id)
 {
-    UNUSED(bs);
-    UNUSED(block_id);
-    return false;
+    if (bs == NULL || bs->bitmap == NULL || block_id >= block_store_get_total_blocks()) return false;
+
+    if (!bitmap_test(bs->bitmap, block_id)) { // Check if the block is free
+        bitmap_set(bs->bitmap, block_id); // Mark it as used
+        return true;
+    }
+
+    return false; // Block was already in use
 }
 
-void block_store_release(block_store_t *const bs, const size_t block_id) {
-    // Check if the provided block_id is within valid range
-    if (block_id < block_store_get_total_blocks()) {
+/*
+ * @function block_store_release
+ * @brief Frees a specified block by marking it as available for use.
+ * @param bs A pointer to the block_store structure.
+ * @param block_id The ID of the block to be released.
+*/
+void block_store_release(block_store_t *const bs, const size_t block_id) 
+{
+    // Check if bs is valid and the provided block_id is within valid range
+    if (bs != NULL && bs->bitmap != NULL && block_id < block_store_get_total_blocks()) {
         // Check if the block is currently allocated (marked as used)
         if (bitmap_test(bs->bitmap, block_id)) {
             // Mark the block as free in the bitmap
@@ -96,9 +115,13 @@ size_t block_store_get_free_blocks(const block_store_t *const bs)
     return 0;
 }
 
+/*
+ * @function block_store_get_total_blocks
+ * @return The total number of blocks available in the block store.
+*/
 size_t block_store_get_total_blocks()
 {
-    return 0;
+    return BLOCK_STORE_NUM_BLOCKS;
 }
 
 size_t block_store_read(const block_store_t *const bs, const size_t block_id, void *buffer)
