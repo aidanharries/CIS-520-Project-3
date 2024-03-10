@@ -60,10 +60,31 @@ void block_store_destroy(block_store_t *const bs)
     }
 }
 
+
+/*
+ * @function block_store_allocate
+ * @brief Searches for a free block, marks it as in use, and returns the block's id
+ * @param BS device.
+ * @return Allocated block's id, SIZE_MAX on error
+*/
 size_t block_store_allocate(block_store_t *const bs)
 {
-    UNUSED(bs);
-    return 0;
+       // Check if bs NULL
+    if (bs == NULL) return SIZE_MAX;
+
+    // iterate through block store
+    for (size_t i = 0; i < BLOCK_STORE_NUM_BLOCKS; ++i) {
+        // gets bit in bitmap and checks if availible 
+        
+        if (bitmap_test(bs->bitmap, i) == false) {
+            // If free, set and return the ID
+            bitmap_set(bs->bitmap, i);
+            return i;
+        }
+    }
+
+    //return SIZE_MAX in no availible/free block
+    return SIZE_MAX;
 }
 
 /*
