@@ -72,7 +72,7 @@ size_t block_store_allocate(block_store_t *const bs)
        // Check if bs NULL
     if (bs == NULL) return SIZE_MAX;
 
-    // iterate through block store
+    // iterate through block store, with i as the id
     for (size_t i = 0; i < BLOCK_STORE_NUM_BLOCKS; ++i) {
         // gets bit in bitmap and checks if availible 
         
