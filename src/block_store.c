@@ -60,7 +60,6 @@ void block_store_destroy(block_store_t *const bs)
     }
 }
 
-
 /*
  * @function block_store_allocate
  * @brief Searches for a free block, marks it as in use, and returns the block's id
@@ -69,13 +68,16 @@ void block_store_destroy(block_store_t *const bs)
 */
 size_t block_store_allocate(block_store_t *const bs)
 {
-       // Check if bs NULL
-    if (bs == NULL) return SIZE_MAX;
+    // Check if bs NULL
+    if (bs == NULL || bs->bitmap == NULL) return SIZE_MAX;
 
     // iterate through block store, with i as the id
-    for (size_t i = 0; i < BLOCK_STORE_NUM_BLOCKS; ++i) {
-        // gets bit in bitmap and checks if availible 
-        
+    for (size_t i = 0; i < block_store_get_total_blocks(); ++i) {
+        // Check if the current block is within the reserved range and skip it if so
+        if (i >= BITMAP_START_BLOCK && i < BITMAP_START_BLOCK + BITMAP_NUM_BLOCKS) {
+            continue;
+        }
+        // Check if the current block is free        
         if (bitmap_test(bs->bitmap, i) == false) {
             // If free, set and return the ID
             bitmap_set(bs->bitmap, i);
