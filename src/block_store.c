@@ -133,10 +133,20 @@ size_t block_store_get_used_blocks(const block_store_t *const bs)
     return bitmap_total_set(bs->bitmap) + BITMAP_NUM_BLOCKS;
 }
 
-size_t block_store_get_free_blocks(const block_store_t *const bs)
-{
-    UNUSED(bs);
-    return 0;
+size_t block_store_get_free_blocks(const block_store_t *const bs) {
+    // Check if the provided block store pointer is valid
+    if (bs == NULL || bs->bitmap == NULL) {
+        return SIZE_MAX; // Return SIZE_MAX on error
+    }
+
+    // Get the total number of blocks in the bitmap
+    size_t total_blocks = block_store_get_total_blocks();
+
+    // Calculate the number of free blocks by subtracting the used blocks from the total blocks
+    size_t used_blocks = block_store_get_used_blocks(bs);
+    size_t free_blocks = total_blocks - used_blocks;
+
+    return free_blocks;
 }
 
 /*
