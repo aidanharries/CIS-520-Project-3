@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "bitmap.h"
 #include "block_store.h"
+#include <string.h>
 // include more if you need
 
 // You might find this handy.  I put it around unused parameters, but you should
@@ -126,6 +127,12 @@ void block_store_release(block_store_t *const bs, const size_t block_id)
     }
 }
 
+/*
+ * @function block_store_get_used_blocks
+ * @brief Counts the total number of used blocks in the block store.
+ * @param bs A pointer to the block_store structure.
+ * @return The total number of used blocks or SIZE_MAX on error.
+*/
 size_t block_store_get_used_blocks(const block_store_t *const bs)
 {
     if (bs == NULL || bs->bitmap == NULL) return SIZE_MAX;
@@ -133,6 +140,12 @@ size_t block_store_get_used_blocks(const block_store_t *const bs)
     return bitmap_total_set(bs->bitmap) + BITMAP_NUM_BLOCKS;
 }
 
+/*
+ * @function block_store_get_free_blocks
+ * @brief Counts the total number of free blocks in the block store.
+ * @param bs A pointer to the block_store structure.
+ * @return The total number of free blocks or SIZE_MAX on error.
+*/
 size_t block_store_get_free_blocks(const block_store_t *const bs) {
     // Check if the provided block store pointer is valid
     if (bs == NULL || bs->bitmap == NULL) {
@@ -158,20 +171,36 @@ size_t block_store_get_total_blocks()
     return BLOCK_STORE_NUM_BLOCKS;
 }
 
-size_t block_store_read(const block_store_t *const bs, const size_t block_id, void *buffer)
-{
-    UNUSED(bs);
-    UNUSED(block_id);
-    UNUSED(buffer);
-    return 0;
+/*
+ * @function block_store_read
+ * @brief Reads data from a specified block into a buffer.
+ * @param bs A pointer to the block_store structure.
+ * @param block_id The ID of the block to read from.
+ * @param buffer The buffer the data should be read into.
+ * @return The number of bytes read or 0 on error.
+*/
+size_t block_store_read(const block_store_t *const bs, const size_t block_id, void *buffer) {
+    if (bs == NULL || bs->data == NULL || buffer == NULL || block_id >= block_store_get_total_blocks()) return 0;
+
+    // Copy data from the specified block into the buffer
+    memcpy(buffer, bs->data + (block_id * BLOCK_SIZE_BYTES), BLOCK_SIZE_BYTES);
+    return BLOCK_SIZE_BYTES;
 }
 
-size_t block_store_write(block_store_t *const bs, const size_t block_id, const void *buffer)
-{
-    UNUSED(bs);
-    UNUSED(block_id);
-    UNUSED(buffer);
-    return 0;
+/*
+ * @function block_store_write
+ * @brief Writes data from a buffer to a specified block.
+ * @param bs A pointer to the block_store structure.
+ * @param block_id The ID of the block to write to.
+ * @param buffer The buffer containing the data to be written.
+ * @return The number of bytes written or 0 on error.
+*/
+size_t block_store_write(block_store_t *const bs, const size_t block_id, const void *buffer) {
+    if (bs == NULL || bs->data == NULL || buffer == NULL || block_id >= block_store_get_total_blocks()) return 0;
+
+    // Copy data from the buffer to the specified block
+    memcpy(bs->data + (block_id * BLOCK_SIZE_BYTES), buffer, BLOCK_SIZE_BYTES);
+    return BLOCK_SIZE_BYTES;
 }
 
 block_store_t *block_store_deserialize(const char *const filename)
