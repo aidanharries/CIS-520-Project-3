@@ -128,8 +128,9 @@ void block_store_release(block_store_t *const bs, const size_t block_id)
 
 size_t block_store_get_used_blocks(const block_store_t *const bs)
 {
-    UNUSED(bs);
-    return 0;
+    if (bs == NULL || bs->bitmap == NULL) return SIZE_MAX;
+
+    return bitmap_total_set(bs->bitmap) + BITMAP_NUM_BLOCKS;
 }
 
 size_t block_store_get_free_blocks(const block_store_t *const bs)
