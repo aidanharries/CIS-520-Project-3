@@ -3,11 +3,8 @@
 #include "bitmap.h"
 #include "block_store.h"
 #include <string.h>
-// include more if you need
-
-// You might find this handy.  I put it around unused parameters, but you should
-// remove it before you submit. Just allows things to compile initially.
-#define UNUSED(x) (void)(x)
+#include <fcntl.h>
+#include <unistd.h>
 
 /*
  * @struct block_store
@@ -146,7 +143,8 @@ size_t block_store_get_used_blocks(const block_store_t *const bs)
  * @param bs A pointer to the block_store structure.
  * @return The total number of free blocks or SIZE_MAX on error.
 */
-size_t block_store_get_free_blocks(const block_store_t *const bs) {
+size_t block_store_get_free_blocks(const block_store_t *const bs) 
+{
     // Check if the provided block store pointer is valid
     if (bs == NULL || bs->bitmap == NULL) {
         return SIZE_MAX; // Return SIZE_MAX on error
@@ -179,7 +177,8 @@ size_t block_store_get_total_blocks()
  * @param buffer The buffer the data should be read into.
  * @return The number of bytes read or 0 on error.
 */
-size_t block_store_read(const block_store_t *const bs, const size_t block_id, void *buffer) {
+size_t block_store_read(const block_store_t *const bs, const size_t block_id, void *buffer) 
+{
     if (bs == NULL || bs->data == NULL || buffer == NULL || block_id >= block_store_get_total_blocks()) return 0;
 
     // Copy data from the specified block into the buffer
@@ -195,7 +194,8 @@ size_t block_store_read(const block_store_t *const bs, const size_t block_id, vo
  * @param buffer The buffer containing the data to be written.
  * @return The number of bytes written or 0 on error.
 */
-size_t block_store_write(block_store_t *const bs, const size_t block_id, const void *buffer) {
+size_t block_store_write(block_store_t *const bs, const size_t block_id, const void *buffer) 
+{
     if (bs == NULL || bs->data == NULL || buffer == NULL || block_id >= block_store_get_total_blocks()) return 0;
 
     // Copy data from the buffer to the specified block
@@ -203,15 +203,87 @@ size_t block_store_write(block_store_t *const bs, const size_t block_id, const v
     return BLOCK_SIZE_BYTES;
 }
 
-block_store_t *block_store_deserialize(const char *const filename)
+/*
+ * @function block_store_deserialize
+ * @brief Deserializes a block store from a file into memory.
+ * @param filename The path to the file containing the serialized block store data.
+ * @return A pointer to the deserialized block store structure, or NULL on failure.
+*/
+block_store_t *block_store_deserialize(const char *const filename) 
 {
-    UNUSED(filename);
-    return NULL;
+    if (!filename) return NULL;
+
+    // Open the file in read-only mode.
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1) return NULL;
+
+    // Allocate and zero-initialize a block store structure.
+    block_store_t *bs = calloc(1, sizeof(block_store_t));
+    if (!bs) {
+        close(fd);
+        return NULL;
+    }
+
+    // Initialize bitmap for managing block allocations.
+    bs->bitmap = bitmap_create(block_store_get_total_blocks());
+    if (!bs->bitmap) {
+        close(fd);
+        free(bs);
+        return NULL;
+    }
+
+    // Read block store data from the file.
+    ssize_t read_bytes = read(fd, bs->data, BLOCK_STORE_NUM_BYTES);
+    if (read_bytes != BLOCK_STORE_NUM_BYTES) {
+        bitmap_destroy(bs->bitmap);
+        close(fd);
+        free(bs);
+        return NULL;
+    }
+
+    // Mark blocks as allocated in the bitmap based on their content.
+    for (size_t block_id = 0; block_id < block_store_get_total_blocks(); ++block_id) {
+        uint8_t *block_data = bs->data + (block_id * BLOCK_SIZE_BYTES);
+        
+        bool is_allocated = false;
+        for (size_t byte_index = 0; byte_index < BLOCK_SIZE_BYTES; ++byte_index) {
+            if (block_data[byte_index] != 0) {
+                is_allocated = true;    // Mark block as used.
+                break;  // Only need one non-zero byte to mark as used.
+            }
+        }
+
+        // If the block is allocated, set its bit in the bitmap
+        if (is_allocated) bitmap_set(bs->bitmap, block_id);
+    }
+
+    close(fd);
+    return bs;
 }
 
-size_t block_store_serialize(const block_store_t *const bs, const char *const filename)
+/*
+ * @function block_store_serialize
+ * @brief Serializes a block store to a file.
+ * @param bs A pointer to the block_store structure to serialize.
+ * @param filename The path to the file where the block store data will be written.
+ * @return The number of bytes written to the file, or 0 on failure.
+*/
+size_t block_store_serialize(const block_store_t *const bs, const char *const filename) 
 {
-    UNUSED(bs);
-    UNUSED(filename);
-    return 0;
+    if (!bs || !filename) return 0;
+
+    // Open or create the file for writing, truncating it if it already exists.
+    // File permissions set to read and write for owner.
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd == -1) return 0;
+
+    // Attempt to write the entire block store data to file.
+    ssize_t written = write(fd, bs->data, BLOCK_STORE_NUM_BYTES);
+    if (written != (ssize_t)BLOCK_STORE_NUM_BYTES) {
+        close(fd);
+        return 0;
+    }
+
+    close(fd);
+    return BLOCK_STORE_NUM_BYTES;
 }
